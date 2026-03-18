@@ -102,7 +102,7 @@ const Index = () => {
       
       {/* Title & Description */}
       <div className="text-center mb-6 animate-fade-in -mt-16">
-        <h1 className="text-3xl font-bold glow-text">Katena Film</h1>
+        <h1 className="text-3xl font-bold glow-text">KATENA FİLM</h1>
         <p className="text-muted-foreground mt-2">
           Arkadaşlarınla senkronize video izle
         </p>
