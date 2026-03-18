@@ -111,7 +111,7 @@ export const VideoPlayer = ({
   
   // Orientation auto-fullscreen için ref
   const isFullscreenFromRotation = useRef(false);
-  const orientationTimeout = useRef<NodeJS.Timeout>();
+  const orientationTimeout = useRef<ReturnType<typeof setTimeout>>();
 
   // Ekran döndürme ile otomatik fullscreen
   useEffect(() => {
