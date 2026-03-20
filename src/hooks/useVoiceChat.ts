@@ -7,13 +7,23 @@ import {
   RemoteParticipant,
   LocalParticipant,
   ConnectionState,
+  RemoteTrackPublication,
+  RemoteTrack,
 } from 'livekit-client';
 import { supabase } from '@/integrations/supabase/client';
+
+interface ScreenShareInfo {
+  participantIdentity: string;
+  participantName: string;
+  track: RemoteTrack | null;
+}
 
 interface VoiceChatState {
   isConnected: boolean;
   isConnecting: boolean;
   isMicEnabled: boolean;
+  isScreenSharing: boolean;
+  remoteScreenShare: ScreenShareInfo | null;
   participants: Map<string, { name: string; isSpeaking: boolean }>;
   error: string | null;
 }
@@ -30,12 +40,15 @@ export const useVoiceChat = (
     isConnected: false,
     isConnecting: false,
     isMicEnabled: false,
+    isScreenSharing: false,
+    remoteScreenShare: null,
     participants: new Map(),
     error: null,
   });
 
   const roomRef = useRef<Room | null>(null);
   const audioElementsRef = useRef<Map<string, HTMLAudioElement>>(new Map());
+  const screenShareVideoRef = useRef<HTMLVideoElement | null>(null);
   const onParticipantJoinRef = useRef<OnParticipantJoinCallback | undefined>(onParticipantJoin);
 
   useEffect(() => {
@@ -54,7 +67,6 @@ export const useVoiceChat = (
     setState(prev => ({ ...prev, isConnecting: true, error: null }));
 
     try {
-      // Get token from edge function
       const { data, error } = await supabase.functions.invoke('livekit-token', {
         body: { roomCode, odaId: roomId, username },
       });
@@ -69,7 +81,6 @@ export const useVoiceChat = (
 
       console.log('LiveKit token received, connecting...');
 
-      // Create and connect to room
       const room = new Room({
         audioCaptureDefaults: {
           autoGainControl: true,
@@ -80,7 +91,6 @@ export const useVoiceChat = (
 
       roomRef.current = room;
 
-      // Set up event listeners
       room.on(RoomEvent.Connected, () => {
         console.log('Connected to LiveKit room');
         setState(prev => ({
@@ -96,6 +106,8 @@ export const useVoiceChat = (
           ...prev,
           isConnected: false,
           isMicEnabled: false,
+          isScreenSharing: false,
+          remoteScreenShare: null,
           participants: new Map(),
         }));
       });
@@ -104,7 +116,6 @@ export const useVoiceChat = (
         console.log('Participant connected:', participant.identity);
         const participantName = participant.name || participant.identity;
         
-        // Notify about new participant
         if (onParticipantJoinRef.current) {
           onParticipantJoinRef.current(participantName);
         }
@@ -121,7 +132,6 @@ export const useVoiceChat = (
 
       room.on(RoomEvent.ParticipantDisconnected, (participant: RemoteParticipant) => {
         console.log('Participant disconnected:', participant.identity);
-        // Clean up audio element
         const audioEl = audioElementsRef.current.get(participant.identity);
         if (audioEl) {
           audioEl.srcObject = null;
@@ -132,18 +142,22 @@ export const useVoiceChat = (
         setState(prev => {
           const newParticipants = new Map(prev.participants);
           newParticipants.delete(participant.identity);
-          return { ...prev, participants: newParticipants };
+          
+          // If this participant was screen sharing, clear it
+          const newRemoteScreenShare = prev.remoteScreenShare?.participantIdentity === participant.identity
+            ? null
+            : prev.remoteScreenShare;
+          
+          return { ...prev, participants: newParticipants, remoteScreenShare: newRemoteScreenShare };
         });
       });
 
       room.on(RoomEvent.ActiveSpeakersChanged, (speakers: Participant[]) => {
         setState(prev => {
           const newParticipants = new Map(prev.participants);
-          // Reset all speaking states
           newParticipants.forEach((value, key) => {
             newParticipants.set(key, { ...value, isSpeaking: false });
           });
-          // Set speaking state for active speakers
           speakers.forEach(speaker => {
             const existing = newParticipants.get(speaker.identity);
             if (existing) {
@@ -162,6 +176,19 @@ export const useVoiceChat = (
           document.body.appendChild(audioEl);
           audioElementsRef.current.set(participant.identity, audioEl);
         }
+        
+        // Screen share track from remote participant
+        if (track.kind === Track.Kind.Video && track.source === Track.Source.ScreenShare) {
+          console.log('Screen share track subscribed from:', participant.identity);
+          setState(prev => ({
+            ...prev,
+            remoteScreenShare: {
+              participantIdentity: participant.identity,
+              participantName: participant.name || participant.identity,
+              track: track as RemoteTrack,
+            },
+          }));
+        }
       });
 
       room.on(RoomEvent.TrackUnsubscribed, (track, publication, participant) => {
@@ -174,9 +201,27 @@ export const useVoiceChat = (
             audioElementsRef.current.delete(participant.identity);
           }
         }
+        
+        // Screen share ended
+        if (track.kind === Track.Kind.Video && track.source === Track.Source.ScreenShare) {
+          console.log('Screen share track unsubscribed from:', participant.identity);
+          setState(prev => {
+            if (prev.remoteScreenShare?.participantIdentity === participant.identity) {
+              return { ...prev, remoteScreenShare: null };
+            }
+            return prev;
+          });
+        }
       });
 
-      // Connect to room
+      // Detect when local screen share ends (user clicks "Stop sharing" in browser)
+      room.on(RoomEvent.LocalTrackUnpublished, (publication) => {
+        if (publication.source === Track.Source.ScreenShare) {
+          console.log('Local screen share ended');
+          setState(prev => ({ ...prev, isScreenSharing: false }));
+        }
+      });
+
       await room.connect(data.url, data.token);
 
       // Add existing participants
@@ -188,6 +233,20 @@ export const useVoiceChat = (
             isSpeaking: false,
           });
           return { ...prev, participants: newParticipants };
+        });
+        
+        // Check if any existing participant is already screen sharing
+        participant.trackPublications.forEach((pub) => {
+          if (pub.track && pub.source === Track.Source.ScreenShare && pub.track.kind === Track.Kind.Video) {
+            setState(prev => ({
+              ...prev,
+              remoteScreenShare: {
+                participantIdentity: participant.identity,
+                participantName: participant.name || participant.identity,
+                track: pub.track as RemoteTrack,
+              },
+            }));
+          }
         });
       });
 
@@ -201,13 +260,12 @@ export const useVoiceChat = (
     }
   }, [roomCode, roomId, username, state.isConnected, state.isConnecting]);
 
-  // Disconnect from LiveKit room
+  // Disconnect
   const disconnect = useCallback(() => {
     if (roomRef.current) {
       roomRef.current.disconnect();
       roomRef.current = null;
     }
-    // Clean up all audio elements
     audioElementsRef.current.forEach((audioEl) => {
       audioEl.srcObject = null;
       audioEl.remove();
@@ -218,6 +276,8 @@ export const useVoiceChat = (
       isConnected: false,
       isConnecting: false,
       isMicEnabled: false,
+      isScreenSharing: false,
+      remoteScreenShare: null,
       participants: new Map(),
       error: null,
     });
@@ -232,11 +292,9 @@ export const useVoiceChat = (
       const localParticipant = room.localParticipant;
 
       if (state.isMicEnabled) {
-        // Disable microphone
         await localParticipant.setMicrophoneEnabled(false);
         setState(prev => ({ ...prev, isMicEnabled: false }));
       } else {
-        // Enable microphone
         await localParticipant.setMicrophoneEnabled(true);
         setState(prev => ({ ...prev, isMicEnabled: true }));
       }
@@ -248,6 +306,40 @@ export const useVoiceChat = (
       }));
     }
   }, [state.isMicEnabled]);
+
+  // Start screen sharing
+  const startScreenShare = useCallback(async () => {
+    if (!roomRef.current || state.isScreenSharing) return;
+
+    try {
+      const room = roomRef.current;
+      await room.localParticipant.setScreenShareEnabled(true);
+      setState(prev => ({ ...prev, isScreenSharing: true }));
+    } catch (error) {
+      console.error('Error starting screen share:', error);
+      // User probably cancelled the picker
+      if (error instanceof Error && error.message.includes('Permission denied')) {
+        return;
+      }
+      setState(prev => ({
+        ...prev,
+        error: 'Ekran paylaşımı başlatılamadı',
+      }));
+    }
+  }, [state.isScreenSharing]);
+
+  // Stop screen sharing
+  const stopScreenShare = useCallback(async () => {
+    if (!roomRef.current || !state.isScreenSharing) return;
+
+    try {
+      const room = roomRef.current;
+      await room.localParticipant.setScreenShareEnabled(false);
+      setState(prev => ({ ...prev, isScreenSharing: false }));
+    } catch (error) {
+      console.error('Error stopping screen share:', error);
+    }
+  }, [state.isScreenSharing]);
 
   // Auto-connect when room code AND username are available
   useEffect(() => {
@@ -265,5 +357,7 @@ export const useVoiceChat = (
     connect,
     disconnect,
     toggleMic,
+    startScreenShare,
+    stopScreenShare,
   };
 };
