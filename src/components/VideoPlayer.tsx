@@ -142,8 +142,8 @@ export const VideoPlayer = ({
             const video = videoRef.current as any;
             if (typeof video.webkitEnterFullscreen === 'function') {
               video.webkitEnterFullscreen();
-            } else if (video.requestFullscreen) {
-              video.requestFullscreen().catch(() => {});
+            } else if (videoContainerRef.current) {
+              (videoContainerRef.current.requestFullscreen || (videoContainerRef.current as any).webkitRequestFullscreen)?.call(videoContainerRef.current).catch(() => {});
             }
           }
         } else if (!landscape && isFullscreenFromRotation.current) {
