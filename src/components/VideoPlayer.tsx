@@ -91,6 +91,7 @@ export const VideoPlayer = ({
   const hlsRef = useRef<Hls | null>(null);
   const youtubePlayerRef = useRef<YTPlayer | null>(null);
   const youtubeContainerRef = useRef<HTMLDivElement>(null);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
   const [urlInput, setUrlInput] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -534,16 +535,15 @@ export const VideoPlayer = ({
       } catch (e) {
         console.error('YouTube fullscreen error:', e);
       }
-    } else if (videoRef.current) {
+    } else {
       const video = videoRef.current as HTMLVideoElement & {
         webkitEnterFullscreen?: () => void;
         webkitExitFullscreen?: () => void;
         webkitDisplayingFullscreen?: boolean;
       };
 
-      // iOS Safari uses webkitEnterFullscreen on video element
-      // Check function existence directly instead of webkitSupportsFullscreen property
-      if (typeof video.webkitEnterFullscreen === 'function') {
+      // iOS Safari: must use webkitEnterFullscreen on video element (no overlay support)
+      if (video && typeof video.webkitEnterFullscreen === 'function') {
         if (video.webkitDisplayingFullscreen) {
           video.webkitExitFullscreen?.();
         } else {
@@ -551,10 +551,14 @@ export const VideoPlayer = ({
         }
       } else if (document.fullscreenElement) {
         document.exitFullscreen();
-      } else if (video.requestFullscreen) {
-        video.requestFullscreen();
-      } else if ((video as any).webkitRequestFullscreen) {
-        (video as any).webkitRequestFullscreen();
+      } else if (videoContainerRef.current) {
+        // Use container for fullscreen so danmaku overlay is visible
+        const container = videoContainerRef.current;
+        if (container.requestFullscreen) {
+          container.requestFullscreen();
+        } else if ((container as any).webkitRequestFullscreen) {
+          (container as any).webkitRequestFullscreen();
+        }
       }
     }
   };
@@ -657,7 +661,7 @@ export const VideoPlayer = ({
   return (
     <div className="relative w-full h-full bg-cinema-dark rounded-lg overflow-hidden">
       {/* Video Container */}
-      <div className="relative aspect-[4/3] lg:aspect-video lg:h-full bg-cinema-dark">
+      <div ref={videoContainerRef} className="relative aspect-[4/3] lg:aspect-video lg:h-full bg-cinema-dark">
         {/* Danmaku Overlay - inside video container so it stays on top */}
         {danmakuOverlay}
         {!videoUrl ? (
