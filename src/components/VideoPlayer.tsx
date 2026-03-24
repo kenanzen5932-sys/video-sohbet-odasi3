@@ -21,6 +21,7 @@ interface VideoPlayerProps {
   onPlayPause: (isPlaying: boolean, currentTime: number) => void;
   onSeek: (time: number) => void;
   lastUpdated: string | null;
+  danmakuOverlay?: React.ReactNode;
 }
 
 // YouTube URL'den video ID çıkar
@@ -84,6 +85,7 @@ export const VideoPlayer = ({
   onPlayPause,
   onSeek,
   lastUpdated,
+  danmakuOverlay,
 }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -654,6 +656,8 @@ export const VideoPlayer = ({
 
   return (
     <div className="relative w-full h-full bg-cinema-dark rounded-lg overflow-hidden">
+      {/* Danmaku Overlay */}
+      {danmakuOverlay}
       {/* Video Container */}
       <div className="relative aspect-[4/3] lg:aspect-video lg:h-full bg-cinema-dark">
         {!videoUrl ? (

@@ -8,6 +8,7 @@ import { VoiceControls } from '@/components/VoiceControls';
 import { ParticipantsDialog } from '@/components/ParticipantsDialog';
 import { SpeakingAvatars } from '@/components/SpeakingAvatars';
 import { ScreenShareView } from '@/components/ScreenShareView';
+import { DanmakuOverlay } from '@/components/DanmakuOverlay';
 import { useRoom } from '@/hooks/useRoom';
 import { useChat } from '@/hooks/useChat';
 import { useVoiceChat } from '@/hooks/useVoiceChat';
@@ -186,6 +187,7 @@ const Room = () => {
               onPlayPause={updatePlaybackState}
               onSeek={seekTo}
               lastUpdated={videoState?.updated_at || null}
+              danmakuOverlay={<DanmakuOverlay messages={messages} />}
             />
           )}
         </div>
