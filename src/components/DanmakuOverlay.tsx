@@ -54,7 +54,7 @@ export const DanmakuOverlay = ({ messages }: DanmakuOverlayProps) => {
   if (danmakus.length === 0) return null;
 
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none z-20">
+    <div className="absolute inset-0 overflow-hidden pointer-events-none z-[9999]">
       {danmakus.map((danmaku) => (
         <div
           key={danmaku.id}

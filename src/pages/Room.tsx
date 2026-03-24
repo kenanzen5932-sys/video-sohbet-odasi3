@@ -164,11 +164,24 @@ const Room = () => {
         <div className="shrink-0 px-2 pt-2 lg:px-0 lg:pt-0 lg:flex-[2] lg:h-full lg:min-w-0">
           {hasActiveScreenShare ? (
             // Show screen share - hide video
-            remoteScreenShare ? (
-              <ScreenShareView
-                track={remoteScreenShare.track}
-                participantName={remoteScreenShare.participantName}
-              />
+            <div className="relative w-full h-full">
+              {remoteScreenShare ? (
+                <ScreenShareView
+                  track={remoteScreenShare.track}
+                  participantName={remoteScreenShare.participantName}
+                />
+              ) : (
+                <LocalScreenShareView
+                  roomRef={null}
+                  onStopShare={stopScreenShare}
+                  username={profile?.username || 'Sen'}
+                />
+              )}
+              {/* Danmaku overlay on screen share */}
+              <div className="absolute inset-0 pointer-events-none z-[9999] overflow-hidden">
+                <DanmakuOverlay messages={messages} />
+              </div>
+            </div>
             ) : (
               // Local screen share - we need to get the local track
               <LocalScreenShareView

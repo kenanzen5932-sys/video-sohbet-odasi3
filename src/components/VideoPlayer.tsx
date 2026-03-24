@@ -656,10 +656,10 @@ export const VideoPlayer = ({
 
   return (
     <div className="relative w-full h-full bg-cinema-dark rounded-lg overflow-hidden">
-      {/* Danmaku Overlay */}
-      {danmakuOverlay}
       {/* Video Container */}
       <div className="relative aspect-[4/3] lg:aspect-video lg:h-full bg-cinema-dark">
+        {/* Danmaku Overlay - inside video container so it stays on top */}
+        {danmakuOverlay}
         {!videoUrl ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
             <div className="w-16 h-16 rounded-full bg-secondary/50 flex items-center justify-center">
