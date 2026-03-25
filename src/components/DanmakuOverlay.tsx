@@ -13,7 +13,9 @@ interface DanmakuOverlayProps {
 }
 
 const DANMAKU_DURATION = 6000; // 6 seconds
-const MAX_LANES = 8;
+const MAX_LANES = 3;
+const CENTER_BAND_START = 44;
+const CENTER_BAND_END = 56;
 
 export const DanmakuOverlay = ({ messages }: DanmakuOverlayProps) => {
   const [danmakus, setDanmakus] = useState<DanmakuMessage[]>([]);
@@ -39,7 +41,9 @@ export const DanmakuOverlay = ({ messages }: DanmakuOverlayProps) => {
       id: lastMsg.id,
       text: lastMsg.content,
       username: lastMsg.username,
-      top: 5 + (lane * (90 / MAX_LANES)), // distribute across 5%-95% height
+      top:
+        CENTER_BAND_START +
+        lane * ((CENTER_BAND_END - CENTER_BAND_START) / Math.max(MAX_LANES - 1, 1)),
       createdAt: Date.now(),
     };
 
@@ -61,6 +65,7 @@ export const DanmakuOverlay = ({ messages }: DanmakuOverlayProps) => {
           className="absolute whitespace-nowrap danmaku-scroll"
           style={{
             top: `${danmaku.top}%`,
+            transform: 'translateY(-50%)',
             animationDuration: `${DANMAKU_DURATION}ms`,
           }}
         >
