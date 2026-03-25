@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ const Room = () => {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
   const [participantsOpen, setParticipantsOpen] = useState(false);
+  const screenShareContainerRef = useRef<HTMLDivElement>(null);
   
   const { user, profile } = useAuth();
 
@@ -164,11 +165,12 @@ const Room = () => {
         <div className="shrink-0 px-2 pt-2 lg:px-0 lg:pt-0 lg:flex-[2] lg:h-full lg:min-w-0">
           {hasActiveScreenShare ? (
             // Show screen share - hide video
-            <div className="relative w-full h-full">
+            <div ref={screenShareContainerRef} className="relative w-full h-full">
               {remoteScreenShare ? (
                 <ScreenShareView
                   track={remoteScreenShare.track}
                   participantName={remoteScreenShare.participantName}
+                  fullscreenTargetRef={screenShareContainerRef}
                 />
               ) : (
                 <LocalScreenShareView
