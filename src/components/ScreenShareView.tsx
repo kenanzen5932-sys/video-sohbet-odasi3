@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, type RefObject } from 'react';
+import { useRef, useEffect, type RefObject } from 'react';
 import { Maximize2, MonitorOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -13,32 +13,65 @@ interface ScreenShareViewProps {
 export const ScreenShareView = ({ track, participantName, isLocalShare, onStopShare, fullscreenTargetRef }: ScreenShareViewProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isAttached, setIsAttached] = useState(false);
+
+  const tryLockLandscape = async () => {
+    const orientation = (screen as any)?.orientation;
+    if (orientation?.lock) {
+      try {
+        await orientation.lock('landscape');
+      } catch {
+        // Some browsers require user gesture/permissions; safe to ignore.
+      }
+    }
+  };
+
+  const tryUnlockOrientation = () => {
+    const orientation = (screen as any)?.orientation;
+    if (orientation?.unlock) {
+      try {
+        orientation.unlock();
+      } catch {
+        // Ignore unsupported states.
+      }
+    }
+  };
 
   useEffect(() => {
     if (!track || !videoRef.current) return;
 
-    const videoEl = track.attach(videoRef.current);
-    setIsAttached(true);
+    track.attach(videoRef.current);
 
     return () => {
       track.detach(videoRef.current!);
-      setIsAttached(false);
     };
   }, [track]);
 
-  const handleFullscreen = () => {
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        tryUnlockOrientation();
+      }
+    };
+
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
+  }, []);
+
+  const handleFullscreen = async () => {
     if (!videoRef.current) return;
     
     const video = videoRef.current as any;
     const fullscreenTarget = fullscreenTargetRef?.current || containerRef.current;
     
     if (document.fullscreenElement) {
-      document.exitFullscreen();
+      await document.exitFullscreen();
+      tryUnlockOrientation();
     } else if (fullscreenTarget?.requestFullscreen) {
-      fullscreenTarget.requestFullscreen();
+      await fullscreenTarget.requestFullscreen();
+      await tryLockLandscape();
     } else if ((fullscreenTarget as any)?.webkitRequestFullscreen) {
       (fullscreenTarget as any).webkitRequestFullscreen();
+      await tryLockLandscape();
     } else if (typeof video.webkitEnterFullscreen === 'function') {
       // iOS Safari fallback (native video fullscreen)
       video.webkitEnterFullscreen();
@@ -49,7 +82,7 @@ export const ScreenShareView = ({ track, participantName, isLocalShare, onStopSh
 
   return (
     <div ref={containerRef} className="relative w-full h-full bg-cinema-dark rounded-lg overflow-hidden">
-      <div className="relative aspect-[4/3] lg:aspect-video lg:h-full bg-cinema-dark">
+      <div className="relative w-full h-full bg-cinema-dark">
         <video
           ref={videoRef}
           className="w-full h-full object-contain"
