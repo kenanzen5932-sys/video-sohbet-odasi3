@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, type RefObject } from 'react';
 import { Maximize2, MonitorOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -7,9 +7,10 @@ interface ScreenShareViewProps {
   participantName: string;
   isLocalShare?: boolean;
   onStopShare?: () => void;
+  fullscreenTargetRef?: RefObject<HTMLDivElement>;
 }
 
-export const ScreenShareView = ({ track, participantName, isLocalShare, onStopShare }: ScreenShareViewProps) => {
+export const ScreenShareView = ({ track, participantName, isLocalShare, onStopShare, fullscreenTargetRef }: ScreenShareViewProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isAttached, setIsAttached] = useState(false);
@@ -30,13 +31,17 @@ export const ScreenShareView = ({ track, participantName, isLocalShare, onStopSh
     if (!videoRef.current) return;
     
     const video = videoRef.current as any;
+    const fullscreenTarget = fullscreenTargetRef?.current || containerRef.current;
     
     if (document.fullscreenElement) {
       document.exitFullscreen();
+    } else if (fullscreenTarget?.requestFullscreen) {
+      fullscreenTarget.requestFullscreen();
+    } else if ((fullscreenTarget as any)?.webkitRequestFullscreen) {
+      (fullscreenTarget as any).webkitRequestFullscreen();
     } else if (typeof video.webkitEnterFullscreen === 'function') {
+      // iOS Safari fallback (native video fullscreen)
       video.webkitEnterFullscreen();
-    } else if (video.requestFullscreen) {
-      video.requestFullscreen();
     } else if (video.webkitRequestFullscreen) {
       video.webkitRequestFullscreen();
     }
