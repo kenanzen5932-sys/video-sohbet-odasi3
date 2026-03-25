@@ -90,11 +90,6 @@ export const ScreenShareView = ({ track, participantName, isLocalShare, onStopSh
           playsInline
         />
         
-        {/* Info bar */}
-        <div className="absolute top-2 left-2 flex items-center gap-2 px-2 py-1 rounded-md bg-destructive/80 text-destructive-foreground text-xs font-medium">
-          <span className="w-2 h-2 rounded-full bg-destructive-foreground animate-pulse" />
-          {isLocalShare ? 'Ekranınızı paylaşıyorsunuz' : `${participantName} ekran paylaşıyor`}
-        </div>
 
         {/* Controls */}
         <div className="absolute top-2 right-2 flex gap-1">
