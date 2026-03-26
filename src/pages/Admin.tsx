@@ -738,12 +738,26 @@ const Admin = () => {
             </button>
             <button
               onClick={() => setActiveTab('chat')}
-              className={`flex-1 py-2 px-4 text-sm font-medium flex items-center justify-center gap-2 ${
+              className={`flex-1 py-2 px-3 text-sm font-medium flex items-center justify-center gap-1.5 ${
                 activeTab === 'chat' 
                   ? 'border-b-2 border-primary text-primary' 
                   : 'text-muted-foreground'
               }`}
             >
+              <MessageCircle className="w-4 h-4" />
+              <span className="hidden sm:inline">Sohbet</span> ({roomMessages.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('gift')}
+              className={`flex-1 py-2 px-3 text-sm font-medium flex items-center justify-center gap-1.5 ${
+                activeTab === 'gift' 
+                  ? 'border-b-2 border-amber-500 text-amber-500' 
+                  : 'text-muted-foreground'
+              }`}
+            >
+              <Gift className="w-4 h-4" />
+              <span className="hidden sm:inline">Hediye</span>
+            </button>
               <MessageCircle className="w-4 h-4" />
               Sohbet ({roomMessages.length})
             </button>
