@@ -107,22 +107,37 @@ export const ParticipantsDialog = ({
               key={id}
               className={cn(
                 'flex items-center justify-between p-2 rounded-lg bg-secondary/50',
-                participant.isSpeaking && 'ring-2 ring-primary'
+                participant.isSpeaking && 'ring-2 ring-primary',
+                participant.isBackground && 'opacity-60'
               )}
             >
               <div className="flex items-center gap-2">
-                <img
-                  src={participant.avatar_url || '/placeholder.svg'}
-                  alt={participant.username}
-                  className="w-8 h-8 rounded-full object-cover border-2 border-secondary"
-                />
-                <span className="text-sm">{participant.username}</span>
+                <div className="relative">
+                  <img
+                    src={participant.avatar_url || '/placeholder.svg'}
+                    alt={participant.username}
+                    className="w-8 h-8 rounded-full object-cover border-2 border-secondary"
+                  />
+                  {participant.isBackground && (
+                    <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-amber-500 flex items-center justify-center">
+                      <EyeOff className="w-2 h-2 text-white" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm">{participant.username}</span>
+                  {participant.isBackground && (
+                    <span className="text-[10px] text-amber-500">Arka planda</span>
+                  )}
+                </div>
               </div>
-              {participant.isSpeaking ? (
-                <Mic className="w-4 h-4 text-primary animate-pulse" />
-              ) : (
-                <MicOff className="w-4 h-4 text-muted-foreground" />
-              )}
+              <div className="flex items-center gap-1.5">
+                {participant.isSpeaking ? (
+                  <Mic className="w-4 h-4 text-primary animate-pulse" />
+                ) : (
+                  <MicOff className="w-4 h-4 text-muted-foreground" />
+                )}
+              </div>
             </div>
           ))}
 
