@@ -1,4 +1,4 @@
-import { Users, Mic, MicOff, Crown, Copy, Check } from 'lucide-react';
+import { Users, Mic, MicOff, Crown, Copy, Check, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import {
   Dialog,
