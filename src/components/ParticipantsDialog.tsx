@@ -107,8 +107,7 @@ export const ParticipantsDialog = ({
               key={id}
               className={cn(
                 'flex items-center justify-between p-2 rounded-lg bg-secondary/50',
-                participant.isSpeaking && 'ring-2 ring-primary',
-                participant.isBackground && 'opacity-60'
+                participant.isSpeaking && 'ring-2 ring-primary'
               )}
             >
               <div className="flex items-center gap-2">
