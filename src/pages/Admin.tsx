@@ -21,6 +21,7 @@ interface RoomParticipant {
   username: string;
   avatar_url: string | null;
   isSpeaking?: boolean;
+  isBackground?: boolean;
 }
 
 interface ChatMessage {
