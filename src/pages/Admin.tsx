@@ -766,13 +766,25 @@ const Admin = () => {
               <div className="space-y-2 p-2">
                 {roomParticipants.length > 0 ? (
                   roomParticipants.map((participant, index) => (
-                    <div key={participant.id || index} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                    <div key={participant.id || index} className={`flex items-center justify-between p-3 rounded-lg bg-muted/50 ${participant.isBackground ? 'opacity-60' : ''}`}>
                       <div className="flex items-center gap-3">
-                        <Avatar className="w-8 h-8">
-                          <AvatarImage src={participant.avatar_url || ''} />
-                          <AvatarFallback>{participant.username[0]}</AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm font-medium">{participant.username}</span>
+                        <div className="relative">
+                          <Avatar className="w-8 h-8">
+                            <AvatarImage src={participant.avatar_url || ''} />
+                            <AvatarFallback>{participant.username[0]}</AvatarFallback>
+                          </Avatar>
+                          {participant.isBackground && (
+                            <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-amber-500 flex items-center justify-center">
+                              <EyeOff className="w-2 h-2 text-white" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium">{participant.username}</span>
+                          {participant.isBackground && (
+                            <span className="text-[10px] text-amber-500">Arka planda</span>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {participant.isSpeaking ? (
