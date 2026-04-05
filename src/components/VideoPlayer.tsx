@@ -381,6 +381,12 @@ export const VideoPlayer = ({
         enableWorker: true,
         lowLatencyMode: true,
         loader: createProxyLoader() as any,
+        // Samsung uyumluluğu için ek ayarlar
+        maxBufferLength: 30,
+        maxMaxBufferLength: 60,
+        startLevel: -1, // Otomatik kalite seçimi
+        capLevelToPlayerSize: true,
+        testBandwidth: true,
       });
 
       hls.loadSource(videoUrl);
@@ -799,6 +805,10 @@ export const VideoPlayer = ({
               playsInline
               webkit-playsinline="true"
               x5-playsinline="true"
+              x5-video-player-type="h5"
+              x5-video-player-fullscreen="true"
+              preload="auto"
+              crossOrigin="anonymous"
             />
             {/* PiP & Fullscreen Buttons - Always visible */}
             <div className="absolute top-2 right-2 flex gap-1">
