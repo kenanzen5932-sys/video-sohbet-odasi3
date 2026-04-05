@@ -381,6 +381,12 @@ export const VideoPlayer = ({
         enableWorker: true,
         lowLatencyMode: true,
         loader: createProxyLoader() as any,
+        // Samsung uyumluluğu için ek ayarlar
+        maxBufferLength: 30,
+        maxMaxBufferLength: 60,
+        startLevel: -1, // Otomatik kalite seçimi
+        capLevelToPlayerSize: true,
+        testBandwidth: true,
       });
 
       hls.loadSource(videoUrl);
